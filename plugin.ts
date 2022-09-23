@@ -1,4 +1,3 @@
-import config from "https://raw.githubusercontent.com/intellcreatio/intellcreatio/master/config.ts";
 import { DiscordJS, IntellCreatio, IntellCreatioConfig } from "./types.ts";
 
 const pluginPermissions = [
@@ -11,9 +10,11 @@ export type PluginPermission = typeof pluginPermissions[number];
 
 export class Plugin {
     private client: () => DiscordJS.Client<true> | null;
+    private configuration: () => typeof IntellCreatioConfig | null;
 
     constructor(
         client: DiscordJS.Client<true>,
+        config: typeof IntellCreatioConfig,
         private permissionRequester: (permission: PluginPermission) => boolean
     ) {
         this.client = () => {
@@ -23,16 +24,32 @@ export class Plugin {
                 return null;
             }
         };
+
+        this.configuration = () => {
+            if (this.permissionRequester("ConfigurationFile")) {
+                return config;
+            } else {
+                return null;
+            }
+        };
     }
 }
 
-export const createStoragePlugins = (client: DiscordJS.Client<true>) => {
-    const storage: { pl: Plugin; p: PluginPermission[] }[] = [];
+export const createStoragePlugins = (
+    client: DiscordJS.Client<true>,
+    config: typeof IntellCreatioConfig
+) => {
+    const storage: {
+        pl: Plugin;
+        config: typeof IntellCreatioConfig;
+        p: PluginPermission[];
+    }[] = [];
     return {
         usePlugin(plugin: typeof Plugin, permissions: PluginPermission[]) {
             storage.push({
                 p: permissions,
-                pl: new plugin(client, (permission) => {
+                config,
+                pl: new plugin(client, config, (permission) => {
                     return permissions.includes(permission);
                 }),
             });
