@@ -42,7 +42,12 @@ export class Plugin {
                 return null;
             }
         };
+
+        return;
     }
+
+    // Plugin runned
+    public run() {}
 }
 
 export const createStoragePlugins = (
